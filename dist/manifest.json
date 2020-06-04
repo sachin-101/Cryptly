@@ -1,5 +1,5 @@
 {
-    "name": "Crypedit",
+    "name": "Cryptly",
     "version": "0.5.5",
     "description": "An encrypted version of grammarly",
     "manifest_version": 2,
@@ -13,8 +13,8 @@
         }
     ],
     "permissions": ["<all_urls>", "storage", "activeTab"],
-    "page_action": {
-        "default_popup": "popup.html",
+    "browser_action": {
+        "default_popup": "src/popup/popup.html",
         "default_icon": {
             "16": "images/get_started16.png",
             "32": "images/get_started32.png",
