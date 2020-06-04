@@ -1,6 +1,9 @@
-// import 'babel-polyfill';
+import 'babel-polyfill';
 import * as tf from '@tensorflow/tfjs';
-import { EMBEDDING_MATRIX, META_DATA, WORD_TO_INDEX } from './utils';
+
+import { WORD_2_INDEX } from './data/eng_word2index_1k';
+import { INDEX_2_VEC } from './data/eng_index2vec_1k';
+import { META_DATA } from './data/eng_meta_1k';
 
 // ------------------------------- pipeline.js ----------------------------------//
 // import { cleanText, pipeline } from './pipeline'; Will be moved as soon as code gets bigger.
@@ -23,8 +26,8 @@ function pipeline(text) {
     let tokens = text.split(" ");
     let indices = [];
     for(let i=0; i<tokens.length; i++) {
-        if(WORD_TO_INDEX[tokens[i]] != undefined) {
-            indices.push(WORD_TO_INDEX[tokens[i]]);
+        if(WORD_2_INDEX[tokens[i]] != undefined) {
+            indices.push(WORD_2_INDEX[tokens[i]]);
         } else {
             console.log(tokens[i] + " not in vocab.");
         }
