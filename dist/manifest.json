@@ -6,10 +6,11 @@
     "background": {
         "scripts": ["src/background.js"]
     },
-    "content_scripts" : [
+    "content_scripts": [
         {
             "js": ["src/content.js"],
-            "matches": ["<all_urls>"]
+            "matches": ["<all_urls>"],
+            "css": ["src/textarea.css"]
         }
     ],
     "permissions": ["<all_urls>", "storage", "activeTab"],
