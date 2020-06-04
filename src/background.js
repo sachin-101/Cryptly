@@ -1,8 +1,9 @@
-import 'babel-polyfill';
+// import 'babel-polyfill';
 import * as tf from '@tensorflow/tfjs';
+import { EMBEDDING_MATRIX, META_DATA, WORD_TO_INDEX } from './utils';
 
 // ------------------------------- pipeline.js ----------------------------------//
-// import { cleanText, pipeline } from './pipeline';
+// import { cleanText, pipeline } from './pipeline'; Will be moved as soon as code gets bigger.
 
 function cleanText(text) {
     // lower case all letters
@@ -10,9 +11,15 @@ function cleanText(text) {
     return text;
 }
 
+/**
+ * Pipeline processes the text and returs words mapped to
+ * indices (Now, we will move to NLP libraries in Javascript soon).
+ * @todo: As it takes slight amount of time, we will do it in an
+ * asynchronous manner.
+ * 
+ * @param {string} text text to be processed
+ */
 function pipeline(text) {
-    
-    // Tokenize
     let tokens = text.split(" ");
     let indices = [];
     for(let i=0; i<tokens.length; i++) {
@@ -25,34 +32,12 @@ function pipeline(text) {
     return indices;
 }
 
-//------------------------------- data.js ----------------------------------------------//
-// import { EMBEDDING_MATRIX, META_DATA, WORD_TO_INDEX } from './data';
-
-const WORD_TO_INDEX = {
-    'love': 0,
-    'hate': 1,
-    'great': 2,
-    'movie': 3
-};
-
-const EMBEDDING_MATRIX = {
-    0: [0.123, 0.325],
-    1: [-0.234, 0.129],
-    2: [0.234, 0.654],
-    3: [0.823, 0.123]
-};
-
-const META_DATA = {
-    vocabSize: 4,
-    embeddingDim: 2,
-    positiveSentiment: 1
-};
-
 //----------------------------------- background.js ------------------------------------//
 
 const VOCAB_SIZE = META_DATA.vocabSize;
 const EMBEDDING_DIM = META_DATA.embeddingDim;
 const POSITIVE_SENT = META_DATA.positiveSentiment;
+const MODEL_URL = 'https://placeholderUrl.com'   // 
 
 // https://miro.medium.com/max/1136/1*QJpDCVVeYhklYJ3uJGNRXQ.jpeg
 // One simply does not write async-await without knowing promises.
@@ -84,37 +69,42 @@ class SentimentClassifier {
     /**
      * Triggers the model to make a prediction on the text provided.
      *
-     * @param {string} text the text to be analyzed.   
+     * @param {string} text the text to be analyzed.
+     * @param {string} textAreaId Id of the textArea which has text
+     * @param {*} tabId tab Id   
      */
     async analyzeText(text, textAreaId, tabId) {
         
         if (!this.model) {
             console.log('Waiting for model to load....');
-            setTimeout(() => { this.analyzeImage(url) }, FIVE_SECONDS_IN_MS); // try after 5 second
+            setTimeout(() => { this.analyzeText(text, textAreaId, tabId) }, FIVE_SECONDS_IN_MS); // try after 5 second
             return;
         }
+        try {
+            text = cleanText(text);
 
-        text = cleanText(text);
-        console.log(" cleaned text ", text);
+            let indices = pipeline(text); // tokenizes and returns a list of tokens indices
+            console.log(indices)
 
-        let indices = pipeline(text); // tokenizes and returns a list of tokens indices
-        console.log(indices)
+            const inputTensor = tf.tensor2d(indices, [1, indices.length], 'int32');
+            inputTensor.print();
 
-        const inputTensor = tf.tensor2d(indices, [1, indices.length], 'int32');
-        inputTensor.print();
-
-        // returns a tensor which is converte to array asynchronously
-        let prediction = await this.model.predict(inputTensor).data();
-        console.log("value ",prediction[0]);
+            // returns a tensor which is converte to array asynchronously
+            let prediction = await this.model.predict(inputTensor).data();
+            console.log("value ",prediction[0]);
+            
+            // Send back the response to the tab
+            let response = {
+                action: 'TEXT_SENTIMENT_CLASSIFIED',
+                prediction: prediction[0] > 0.5 ? 'POSITIVE' : 'NEGATIVE',
+                textAreaId: textAreaId
+            };
+            console.log("response ", response);
+            chrome.tabs.sendMessage(tabId, response);
         
-        // Send back the response to the tab
-        let response = {
-            action: 'TEXT_SENTIMENT_CLASSIFIED',
-            prediction: prediction[0] > 0.5 ? 'POSITIVE' : 'NEGATIVE',
-            textAreaId: textAreaId
-        };
-        console.log("response ", response);
-        chrome.tabs.sendMessage(tabId, response);
+        } catch (err) {     // catches the unresolved promise
+            console.log("Error", err);
+        }
     }
 }
 

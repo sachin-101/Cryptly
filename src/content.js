@@ -106,7 +106,10 @@ const onTextChange = event => {
     // });
 };
 
-
+/**
+ * Assign unique_id to each text area found on the page.
+ * @todo: Insert a document.ready here.
+ */
 const textAreas = document.getElementsByTagName("textarea");
 for(let i=0; i<textAreas.length; i++) {
     // index is used for uniquely identify text areas
