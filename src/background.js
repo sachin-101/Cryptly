@@ -1,49 +1,108 @@
 import 'babel-polyfill';
 import * as tf from '@tensorflow/tfjs';
+// import { Pipeline } from './pipeline';
 
-import { WORD_2_INDEX } from './data/eng_word2index_1k';
-import { INDEX_2_VEC } from './data/eng_index2vec_1k';
-import { META_DATA } from './data/eng_meta_1k';
+// import { WORD_2_INDEX } from './data/eng_word2index_1k';
+// import { INDEX_2_VEC } from './data/eng_index2vec_1k';
+// import { META_DATA } from './data/eng_meta_1k';
+// import { array } from '../dist/src/background';
+// const VOCAB_SIZE = META_DATA.vocabSize;
+// const EMBEDDING_DIM = META_DATA.embeddingDim;
+// const POSITIVE_SENT = META_DATA.positiveSentiment;
 
-// ------------------------------- pipeline.js ----------------------------------//
-// import { cleanText, pipeline } from './pipeline'; Will be moved as soon as code gets bigger.
+const ROOT_URL = 'http://localhost:5000/imdb_review/'
+const MODEL_URL = ROOT_URL + 'model.json'
+const WORD2INDEX_URL = ROOT_URL + 'word2index.json'
+const META_DATA_URL = ROOT_URL + 'meta.json'
 
-function cleanText(text) {
-    // lower case all letters
-    text = text.toLowerCase();
-    return text;
-}
 
-/**
- * Pipeline processes the text and returs words mapped to
- * indices (Now, we will move to NLP libraries in Javascript soon).
- * @todo: As it takes slight amount of time, we will do it in an
- * asynchronous manner.
- * 
- * @param {string} text text to be processed
- */
-function pipeline(text) {
-    let tokens = text.split(" ");
-    let indices = [];
-    for(let i=0; i<tokens.length; i++) {
-        if(WORD_2_INDEX[tokens[i]] != undefined) {
-            indices.push(WORD_2_INDEX[tokens[i]]);
-        } else {
-            console.log(tokens[i] + " not in vocab.");
-        }
+class Pipeline {
+
+    constructor(word2index_url, meta_url) {
+        this.fetchWord2Index(word2index_url);
+        this.fetchMetaData(meta_url);
     }
-    return indices;
+
+    /**
+     * Loads the word2index to map words to indices.
+     */
+    async fetchWord2Index(word2index_url) {
+        console.log("Fetching word2index");
+        fetch(word2index_url)
+            .then(response => response.json())
+            .then((response) => {
+                this.word2index = response;
+                console.log("Word2index data loaded.", response);
+            })
+            .catch(err => console.log(err));
+    }
+
+    /**
+     * Loads the meta data related to training.
+     */
+    fetchMetaData(meta_url) {
+        console.log("Fetching meta Data")
+        fetch(meta_url)
+            .then(response => response.json())
+            .then((response) => {
+                this.meta = response;
+                console.log("meta data loaded.", response);
+            })
+            .catch(err => console.log(err));
+    }
+
+    async process(text) {
+        
+        if(!this.word2index) {
+            console.log('Waiting for word2index to load....');
+            setTimeout(() => { this.process(text) }, FIVE_SECONDS_IN_MS);
+            return;
+        }
+        
+        if(!this.meta) {
+            console.log('Waiting for meta data to load....');
+            setTimeout(() => { this.process(text) }, FIVE_SECONDS_IN_MS);
+            return;
+        }
+
+        // preprocessing
+        text = text.toLowerCase();
+        
+        // Tokenization
+        let tokens = text.split(" ");
+        
+        // map the tokens to correpsonding indices
+        let indices = [];
+
+        for(let i=0; i < tokens.length && i < this.meta.max_length; i++) {
+            let index = this.word2index[tokens[i]];
+            if(index != undefined && index < this.meta.vocab_size) {
+                indices.push(this.word2index[tokens[i]])
+            }else {
+                indices.push(this.word2index[this.meta.oov_token]);  // oov token
+            }
+        }
+
+        // pad the indices if shorter than max length
+        let pad = this.meta.max_length - indices.length;
+        
+        if(this.meta.trun_type == "post") {
+            for(let i=0; i<pad; i++) {
+                indices.unshift(0);     // IS IT COSTLY OPERATION ?       
+            }
+        } else {
+            for(let i=0; i<pad; i++) {
+                indices.push(0);
+            }
+        }
+
+        console.log("indices here", indices);
+        
+        return indices
+    }
 }
 
-//----------------------------------- background.js ------------------------------------//
 
-const VOCAB_SIZE = META_DATA.vocabSize;
-const EMBEDDING_DIM = META_DATA.embeddingDim;
-const POSITIVE_SENT = META_DATA.positiveSentiment;
-const MODEL_URL = 'https://placeholderUrl.com'   // 
-
-// https://miro.medium.com/max/1136/1*QJpDCVVeYhklYJ3uJGNRXQ.jpeg
-// One simply does not write async-await without knowing promises.
 
 class SentimentClassifier {
     constructor() {
@@ -56,38 +115,31 @@ class SentimentClassifier {
     async loadModel() {
         console.log('Loading model...');
         try {
-            // this.model = await tf.loadGraphModel(MODEL_URL);
-            this.model = tf.sequential({
-                layers: [tf.layers.embedding({inputDim: VOCAB_SIZE, outputDim: EMBEDDING_DIM}),
-                        tf.layers.lstm({units: 4, returnSequences: false}),
-                        tf.layers.dense({units: 1, activation: 'sigmoid'})
-                    ]
-            });
-            console.log("Model loaded");
-        } catch {
+            this.model = await tf.loadLayersModel(MODEL_URL);
+            console.log("Model loaded.")
+        } catch (e){
             console.error(`Unable to load model from URL: ${MODEL_URL}`);
+            console.error(e);
         }
     }
 
+    
     /**
      * Triggers the model to make a prediction on the text provided.
      *
-     * @param {string} text the text to be analyzed.
+     * @param {string} indices the indices output by Pipeline
      * @param {string} textAreaId Id of the textArea which has text
      * @param {*} tabId tab Id   
      */
-    async analyzeText(text, textAreaId, tabId) {
+    async analyzeText(indices, textAreaId, tabId) {
         
         if (!this.model) {
             console.log('Waiting for model to load....');
             setTimeout(() => { this.analyzeText(text, textAreaId, tabId) }, FIVE_SECONDS_IN_MS); // try after 5 second
             return;
         }
-        try {
-            text = cleanText(text);
 
-            let indices = pipeline(text); // tokenizes and returns a list of tokens indices
-            console.log(indices)
+        try {
 
             const inputTensor = tf.tensor2d(indices, [1, indices.length], 'int32');
             inputTensor.print();
@@ -112,7 +164,7 @@ class SentimentClassifier {
 }
 
 const sentimentClassifier = new SentimentClassifier();
-
+const pipeline = new Pipeline(WORD2INDEX_URL, META_DATA_URL);
 
 
 /**
@@ -128,7 +180,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log("received request", request);
     if (request && request.action && request.textAreaId && request.text) {
         if (request.action ==  'TEXT_SENTIMENT') {
-            sentimentClassifier.analyzeText(request.text, request.textAreaId, sender.tab.id);
+            let indices = pipeline.process(request.text);
+            indices.then(indices => {
+                console.log("Going to analyze text", indices);
+                sentimentClassifier.analyzeText(indices, request.textAreaId, sender.tab.id);
+            })
+            .catch(err => console.log(err)); 
         }      
     }
 });

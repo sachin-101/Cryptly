@@ -1,0 +1,1 @@
+{"vocab_size": 2000, "embedding_dim": 50, "max_length": 120, "trunc_type": "post", "oov_token": "<OOV>"}
