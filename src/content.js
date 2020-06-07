@@ -1,22 +1,54 @@
 const CUSTOM_ATTR = 'unique_id';
+const URL = window.location.href;
+const permissions = {
+    USE_CRYPTLY: false
+}
+
+
 /**
- * Called when an animation set for textarea begins, thereby binding that new element
- * with an event listener
+ * Attaches oninput listener to textarea
  * @param event
  */
 let i = 0; // unique id for the textareas
-const insertListener = (event) => {
-    if (event.animationName == 'nodeInserted') {
-        let target = event.target;
-        target.setAttribute(CUSTOM_ATTR, i);
-        i++;
-        target.removeEventListener('input', onTextChange);
-        target.addEventListener('input', onTextChange);
-    }
+const insertListener = (target) => {
+    if (target.getAttribute(CUSTOM_ATTR) === null) target.setAttribute(CUSTOM_ATTR, i);
+    i++;
+    target.removeEventListener('input', onTextChange);
+    target.addEventListener('input', onTextChange);
 };
 
-document.removeEventListener('animationstart', insertListener); // removes listener first to avoid multiple listeners
-document.addEventListener('animationstart', insertListener); // adds listener for new or existing textarea elements
+
+/**
+ * Called when an animation set for textarea begins, thereby binding that new element
+ * with an event listener
+ * @param {*} event 
+ */
+const animationStartListenser = event => {
+    if (event.animationName === "nodeInserted") {
+        insertListener(event.target);
+    }
+}
+
+
+/**
+ * Attaches animation event listeners to the body, which will eventually help tracking new textarea nodes
+ */
+const addAnimationEventListeners = () => {
+    document.removeEventListener('animationstart', animationStartListenser); // removes listener first to avoid multiple listeners
+    document.addEventListener('animationstart', animationStartListenser); // adds listener for new or existing textarea elements
+}
+
+
+/**
+ * checks if url is permitted for using cryptly, accordingly attaches event listeners
+ */
+chrome.storage.sync.get(['urls'], data => {
+    let urls = data.urls;
+    if (urls.indexOf(URL) !== -1) {
+        permissions.USE_CRYPTLY = true;
+    }
+    if (permissions.USE_CRYPTLY) addAnimationEventListeners();
+})
 
 /**
  * Returns a DOM textArea element pointing to the textArea having "unique_id"
@@ -42,7 +74,6 @@ const addSentimentEmojiToTextArea = (textArea, sentiment) => {
     textArea.style.position = 'absolute';
     const originalParent = textArea.parentElement;
     let emojiDiv;
-
     if (!(originalParent.id == 'cryptly_textArea_container')) {
         const container = document.createElement('div');
         container.id = 'cryptly_textArea_container'; // to avoid creating container again and again
@@ -118,3 +149,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
     }
 });
+
+
+/**
+ * Listens to changes in allowed urls. Accordingly removes or adds event listeners
+ */
+chrome.storage.onChanged.addListener((changes, _) => {
+    if (!("urls" in changes)) return;
+    if (changes.urls.newValue.indexOf(URL) === -1 && permissions.USE_CRYPTLY) {
+        permissions.USE_CRYPTLY = false;
+        document.querySelectorAll(`*[${CUSTOM_ATTR}]`).forEach(el => el.removeEventListener('input', onTextChange));
+        document.removeEventListener('animationstart', animationStartListenser);
+    } else if (changes.urls.newValue.indexOf(URL) !== -1 && !permissions.USE_CRYPTLY) {
+        permissions.USE_CRYPTLY = true;
+        addAnimationEventListeners();
+        document.querySelectorAll(`textarea`).forEach(el => {
+            insertListener(el);
+        });
+    }
+})
