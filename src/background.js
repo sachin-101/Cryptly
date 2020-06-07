@@ -2,6 +2,12 @@ import 'babel-polyfill';
 import * as tf from '@tensorflow/tfjs';
 import { Pipeline } from './pipeline';
 
+
+/**
+ * Set initial value of all allowed urls
+ */
+chrome.storage.sync.set({urls: []})
+
 /**
  * Add listener to recieve requests from tabs, and pass the text to 
  * pipeline and then to model for inference. Returns a response
