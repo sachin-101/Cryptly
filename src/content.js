@@ -30,11 +30,11 @@ const getTextAreaWithUniqueId = (unique_id) => document.querySelector(`textarea[
  * Overlays the sentiment emoji on bottom right of the Text Area element.
  *
  * Converts:
- * <textarea style="width: 400px; height: 200px;">This is textarea 1</textarea>
+ * <textarea style="width: 400px; height: 200px;"></textarea>
  *
  * To:
  * <div style="width: 406px; height: 206px; position: relative;">
- *      <textarea style="width: 400px; height: 200px; position: absolute;">This is textarea 1</textarea>
+ *      <textarea style="width: 400px; height: 200px; position: absolute;"></textarea>
  *      <div style="right: 4px; bottom: 4px; position: absolute;">😄</div>
  * </div>
  */
@@ -50,27 +50,27 @@ const addSentimentEmojiToTextArea = (textArea, sentiment) => {
         let add6Pixels = (size) => String(Number(size.replace('px', '')) + 6) + 'px'; // handy function
         container.style.width = add6Pixels(textArea.style.width);
         container.style.height = add6Pixels(textArea.style.height);
-
+        
         // create a new emoji div
         emojiDiv = document.createElement('div');
         emojiDiv.id = `cryptly_emoji_container_${textArea.getAttribute(CUSTOM_ATTR)}`;
         emojiDiv.style.position = 'absolute';
         emojiDiv.style.right = '4px';
         emojiDiv.style.bottom = '4px';
-
+        
         // Add the containerNode as a peer to the textArea, right next to the textArea.
         originalParent.insertBefore(container, textArea);
-
+        
         // Move the textArea to inside the container;
         container.appendChild(textArea);
-
+        
         // Add the emoji Div right after the textArea;
         container.appendChild(emojiDiv);
     } else {
         // Use previously created div.
         emojiDiv = document.getElementById(`cryptly_emoji_container_${textArea.getAttribute(CUSTOM_ATTR)}`);
     }
-
+    
     console.log(sentiment);
     if (sentiment === 'POSITIVE') {
         emojiDiv.textContent = `😄 HAPPY`;
@@ -92,21 +92,12 @@ const addSentimentEmojiToTextArea = (textArea, sentiment) => {
  */
 const onTextChange = (event) => {
     // Communicate to popups here.
-    let message = {
+
+    chrome.runtime.sendMessage({
         action: 'TEXT_SENTIMENT',
         textAreaId: event.target.getAttribute(CUSTOM_ATTR),
         text: event.target.value,
-    };
-    console.log('Sending text for analysis.');
-    chrome.runtime.sendMessage(message);
-    // chrome.runtime.sendMessage(message), response => {
-    //     if (response && response.action && response.textAreaId && response.prediction) {
-    //         if (response.action ==  'TEXT_SENTIMENT_CLASSIFIED') {
-    //             const textArea = getTextAreaWithUniqueId(response.textAreaId);
-    //             addSentimentEmojiToTextArea(textArea, response.prediction);
-    //         }
-    //     }
-    // });
+    });
 };
 
 /**
@@ -119,7 +110,7 @@ const onTextChange = (event) => {
  *          }
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('received reponse', message);
+    console.log('Received reponse', message);
     if (message && message.action && message.textAreaId && message.prediction) {
         if (message.action == 'TEXT_SENTIMENT_CLASSIFIED') {
             const textArea = getTextAreaWithUniqueId(message.textAreaId);

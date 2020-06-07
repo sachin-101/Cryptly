@@ -3,7 +3,7 @@
   "version": "0.5.5",
   "description": "An encrypted version of grammarly",
   "scripts": {
-    "copy": "cp -t dist/src/ src/content.js src/textarea.css && cp -r src/popup dist/src/",
+    "copy": "cp -t dist/src/ src/content.js src/textarea.css -r src/popup",
     "build": "parcel build src/background.js -d dist/src/ -o background --no-minify && npm run copy",
     "watch": "npm run copy && parcel watch src/* --hmr-hostname localhost -d dist/src/ -o background"
   },
