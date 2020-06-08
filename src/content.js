@@ -45,12 +45,9 @@ const addAnimationEventListeners = () => {
 /**
  * checks if url is in blocked urls, if not then attach event listeners
  */
-chrome.storage.sync.get(['urls'], data => {
-    let blocked_urls = data.urls;
-    if (blocked_urls.indexOf(URL) !== -1) { // present url in blocked url
-        permissions.USE_CRYPTLY = false;
-    }
-    console.log("Use Cryptly: " , permissions.USE_CRYPTLY);
+chrome.storage.sync.get(['blocked_urls'], data => {
+    let blocked_urls = data.blocked_urls;
+    if (blocked_urls.indexOf(URL) !== -1) permissions.USE_CRYPTLY = false;
     if (permissions.USE_CRYPTLY) {
         document.querySelectorAll(`textarea`).forEach(el => insertListener(el));
         addAnimationEventListeners();   // for the text areas added on fly

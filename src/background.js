@@ -4,10 +4,16 @@ import { Pipeline } from './pipeline';
 
 
 /**
- * @todo: Is it persistent ?
- * Set initial value of all blocked urls
+ * Check if blocked_urls exist in storage, if not
+ * then initialize with an empty array.
  */
-chrome.storage.sync.set({blocked_urls: []})
+chrome.storage.sync.get(['blocked_urls'],data => {
+    if(data.blocked_urls === undefined) {        
+        chrome.storage.sync.set({'blocked_urls': []}, () => {
+            console.log("Initialized blocked urls array");
+        });
+    }
+});
 
 /**
  * Add listener to recieve requests from tabs, and pass the text to 
