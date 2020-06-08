@@ -51,7 +51,10 @@ chrome.storage.sync.get(['urls'], data => {
         permissions.USE_CRYPTLY = false;
     }
     console.log("Use Cryptly: " , permissions.USE_CRYPTLY);
-    if (permissions.USE_CRYPTLY) addAnimationEventListeners();
+    if (permissions.USE_CRYPTLY) {
+        document.querySelectorAll(`textarea`).forEach(el => insertListener(el));
+        addAnimationEventListeners();   // for the text areas added on fly
+    }
 });    
 
 /**
