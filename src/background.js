@@ -4,9 +4,10 @@ import { Pipeline } from './pipeline';
 
 
 /**
- * Set initial value of all allowed urls
+ * @todo: Is it persistent ?
+ * Set initial value of all blocked urls
  */
-chrome.storage.sync.set({urls: []})
+chrome.storage.sync.set({blocked_urls: []})
 
 /**
  * Add listener to recieve requests from tabs, and pass the text to 

@@ -1,8 +1,8 @@
 const CUSTOM_ATTR = 'unique_id';
-const URL = window.location.href;
 const DELAY = 1000; // One second
+const URL = window.location.href;
 const permissions = {
-    USE_CRYPTLY: false
+    USE_CRYPTLY: true
 }
 
 
@@ -11,9 +11,11 @@ const permissions = {
  * @param event
  */
 let i = 0; // unique id for the textareas
-const insertListener = (target) => {
-    if (target.getAttribute(CUSTOM_ATTR) === null) target.setAttribute(CUSTOM_ATTR, i);
-    i++;
+const insertListener = (target) => {    
+    if (target.getAttribute(CUSTOM_ATTR) === null) {
+        target.setAttribute(CUSTOM_ATTR, i);
+        i++;
+    }
     target.removeEventListener('input', debounceOnTextChange);
     target.addEventListener('input', debounceOnTextChange);
 };
@@ -41,15 +43,16 @@ const addAnimationEventListeners = () => {
 
 
 /**
- * checks if url is permitted for using cryptly, accordingly attaches event listeners
+ * checks if url is in blocked urls, if not then attach event listeners
  */
 chrome.storage.sync.get(['urls'], data => {
-    let urls = data.urls;
-    if (urls.indexOf(URL) !== -1) {
-        permissions.USE_CRYPTLY = true;
+    let blocked_urls = data.urls;
+    if (blocked_urls.indexOf(URL) !== -1) { // present url in blocked url
+        permissions.USE_CRYPTLY = false;
     }
+    console.log("Use Cryptly: " , permissions.USE_CRYPTLY);
     if (permissions.USE_CRYPTLY) addAnimationEventListeners();
-})
+});    
 
 /**
  * Returns a DOM textArea element pointing to the textArea having "unique_id"
@@ -171,13 +174,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  * Listens to changes in allowed urls. Accordingly removes or adds event listeners
  */
 chrome.storage.onChanged.addListener((changes, _) => {
-    if (!("urls" in changes)) return;
-    if (changes.urls.newValue.indexOf(URL) === -1 && permissions.USE_CRYPTLY) {
+    if (!("blocked_urls" in changes)) return;
+    if (changes.blocked_urls.newValue.indexOf(URL) !== -1 && permissions.USE_CRYPTLY) {
+        
+        console.log("Cryptly paused on this site.");
         permissions.USE_CRYPTLY = false;
-        document.querySelectorAll(`*[${CUSTOM_ATTR}]`).forEach(el => el.removeEventListener('input', debounceOnTextChange));
+        // remove listeners
+        document.querySelectorAll(`*[${CUSTOM_ATTR}]`).forEach(el => {
+            el.removeEventListener('input', debounceOnTextChange)
+        });
         document.removeEventListener('animationstart', animationStartListenser);
-    } else if (changes.urls.newValue.indexOf(URL) !== -1 && !permissions.USE_CRYPTLY) {
+    } else if (changes.blocked_urls.newValue.indexOf(URL) === -1 && !permissions.USE_CRYPTLY) {
+        
+        console.log("Cryptly started on this site.");
         permissions.USE_CRYPTLY = true;
+        // Add listeners
         addAnimationEventListeners();
         document.querySelectorAll(`textarea`).forEach(el => {
             insertListener(el);

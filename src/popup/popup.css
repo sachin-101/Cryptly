@@ -5,14 +5,22 @@ body {
 
 hr {
   color: gray;
-  width: 90%;
 }
 
-.custom_label {
+.switch_label {
   font-size: large;
-  padding-right: 20px;
 }
 
+div {
+  text-align: Center;
+  margin: 20px;
+  border: 10px;
+}
+
+footer {
+  text-align: center;
+  color: gray;
+}
 /* Source: W3 schools */
 
 /* The switch - the box around the slider */
@@ -20,7 +28,6 @@ hr {
   position: relative;
   width: 60px;
   height: 34px;
-  margin-right: 20px;
   float: right;
 }
 
@@ -40,8 +47,8 @@ hr {
   right: 0;
   bottom: 0;
   background-color: #ccc;
-  -webkit-transition: 0.4s;
-  transition: 0.4s;
+  -webkit-transition: 0.2s;
+  transition: 0.2s;
 }
 
 .slider:before {
@@ -52,8 +59,8 @@ hr {
   left: 4px;
   bottom: 4px;
   background-color: white;
-  -webkit-transition: 0.4s;
-  transition: 0.4s;
+  -webkit-transition: 0.2s;
+  transition: 0.2s;
 }
 
 input:checked + .slider {
