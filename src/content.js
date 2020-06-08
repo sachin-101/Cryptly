@@ -1,5 +1,6 @@
 const CUSTOM_ATTR = 'unique_id';
 const URL = window.location.href;
+const DELAY = 1000; // One second
 const permissions = {
     USE_CRYPTLY: false
 }
@@ -13,8 +14,8 @@ let i = 0; // unique id for the textareas
 const insertListener = (target) => {
     if (target.getAttribute(CUSTOM_ATTR) === null) target.setAttribute(CUSTOM_ATTR, i);
     i++;
-    target.removeEventListener('input', onTextChange);
-    target.addEventListener('input', onTextChange);
+    target.removeEventListener('input', debounceOnTextChange);
+    target.addEventListener('input', debounceOnTextChange);
 };
 
 
@@ -116,20 +117,35 @@ const addSentimentEmojiToTextArea = (textArea, sentiment) => {
 };
 
 /**
+ * Wraps a function to perform debouncing.
+ * @param {function} func to be debounced 
+ */
+var debounceFunction = (func, delay) => {
+    let inDebounce; // helps to cancel the setTimeOut()
+    return function() {
+        const context = this;   // global object
+        const args = arguments; // List of arguments passed to pass to func
+        clearTimeout(inDebounce);   // cancel the setTimeOut() function
+        inDebounce = setTimeout(() => func.apply(context, args), delay);
+    };
+};
+
+/**
  * Called when change in text in a Text Area occurs.
  * Passes the text to the background script for analyzing
  * the text, along with a message for type of analyziation required.
  * @param {event} event
  */
 const onTextChange = (event) => {
-    // Communicate to popups here.
-
     chrome.runtime.sendMessage({
         action: 'TEXT_SENTIMENT',
         textAreaId: event.target.getAttribute(CUSTOM_ATTR),
         text: event.target.value,
     });
 };
+
+// Define a debounced onTextChange function
+var debounceOnTextChange = debounceFunction(onTextChange, DELAY);
 
 /**
  * Add a listener to hear from the background.js after completion of a task.
@@ -158,7 +174,7 @@ chrome.storage.onChanged.addListener((changes, _) => {
     if (!("urls" in changes)) return;
     if (changes.urls.newValue.indexOf(URL) === -1 && permissions.USE_CRYPTLY) {
         permissions.USE_CRYPTLY = false;
-        document.querySelectorAll(`*[${CUSTOM_ATTR}]`).forEach(el => el.removeEventListener('input', onTextChange));
+        document.querySelectorAll(`*[${CUSTOM_ATTR}]`).forEach(el => el.removeEventListener('input', debounceOnTextChange));
         document.removeEventListener('animationstart', animationStartListenser);
     } else if (changes.urls.newValue.indexOf(URL) !== -1 && !permissions.USE_CRYPTLY) {
         permissions.USE_CRYPTLY = true;
