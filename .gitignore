@@ -3,3 +3,5 @@ yarn.lock
 dist/src/*
 node_modules/
 .vscode
+resources/
+package-lock.json

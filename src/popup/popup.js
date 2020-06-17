@@ -34,3 +34,13 @@ document.getElementById('switch_sent').onchange = e => {
         })
     })
 }
+
+/**
+ * Send message to background script to start Federated Learning process
+ * upon user request.
+ */
+document.getElementById('new_model_button').onclick = e => {
+    chrome.runtime.sendMessage({
+        action: 'START_FL'
+    })
+}

@@ -1,3 +1,5 @@
+const FIVE_SECONDS_IN_MS = 5000;
+
 export class Pipeline {
 
     constructor(word2index_url, meta_url) {
