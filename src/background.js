@@ -145,8 +145,8 @@ chrome.storage.local.get(['trainData'], data => {
  */
 chrome.runtime.onMessage.addListener( async (request, sender, sendResponse) => {
     if (request && request.action ==  'START_FL') {
-        console.log('Request to start Federated Learning');
-        startFL("ws://localhost:5001", "mnist", "3.0.0");
+        console.log('Request to start Federated Learning', request);
+        startFL("ws://localhost:5001", "Cryptly", request.version);
         // Some testing.
         // chrome.storage.local.get(['trainData'], async (data) => {
 

@@ -1,4 +1,5 @@
 
+console.log("popup");
 /**
  * Set the ui of the toggle accordingly
  */
@@ -40,7 +41,9 @@ document.getElementById('switch_sent').onchange = e => {
  * upon user request.
  */
 document.getElementById('new_model_button').onclick = e => {
+    let version = document.getElementById('version').value;    
     chrome.runtime.sendMessage({
-        action: 'START_FL'
+        action: 'START_FL',
+        version: version
     })
 }
