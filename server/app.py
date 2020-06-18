@@ -8,31 +8,31 @@ cors = CORS(app)    # This will enable CORS for all routes
 
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-@app.route("/imdb_review/model.json")
+@app.route("/yelp_polarity_review/model.json")
 @cross_origin()
 def get_model():
-    with open("imdb_review/model.json", "r") as f:
+    with open("yelp_polarity_review/model.json", "r") as f:
         model = json.load(f)
     return model
 
-@app.route("/imdb_review/group1-shard1of1.bin")
+@app.route("/yelp_polarity_review/group1-shard1of1.bin")
 @cross_origin()
 def get_binary():
-    with open("imdb_review/group1-shard1of1.bin", "rb") as f:
+    with open("yelp_polarity_review/group1-shard1of1.bin", "rb") as f:
         meta_data = f.read()
     return meta_data
 
-@app.route("/imdb_review/word2index.json")
+@app.route("/yelp_polarity_review/word2index.json")
 @cross_origin()
 def get_word2index():
-    with open("imdb_review/word2index.json", "r") as f:
+    with open("yelp_polarity_review/word2index.json", "r") as f:
         word2index = json.load(f)
     return word2index
 
-@app.route("/imdb_review/meta.json")
+@app.route("/yelp_polarity_review/meta.json")
 @cross_origin()
 def get_meta():
-    with open("imdb_review/meta.json", "r") as f:
+    with open("yelp_polarity_review/meta.json", "r") as f:
         meta = json.load(f)
     return meta
 

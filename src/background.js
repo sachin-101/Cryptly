@@ -46,7 +46,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-const ROOT_URL = 'http://localhost:5000/imdb_review/'
+const ROOT_URL = 'http://localhost:5000/yelp_polarity_review/'
 const MODEL_URL = ROOT_URL + 'model.json'
 const WORD2INDEX_URL = ROOT_URL + 'word2index.json'
 const META_DATA_URL = ROOT_URL + 'meta.json'
@@ -63,7 +63,7 @@ class SentimentClassifier {
         console.log('Loading model...');
         try {
             this.model = await tf.loadLayersModel(MODEL_URL);
-            console.log("Model loaded.")
+            console.log("Model loaded."); this.model.summary();
         } catch (e){
             console.error(`Unable to load model from URL: ${MODEL_URL}`);
             console.error(e);
