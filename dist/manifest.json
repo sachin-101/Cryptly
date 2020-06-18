@@ -28,5 +28,11 @@
         "32": "images/get_started32.png",
         "48": "images/get_started48.png",
         "128": "images/get_started128.png"
+    },
+    "applications": {
+        "gecko": {
+            "id": "cryptly@firefox",
+            "strict_min_version": "0.7.0"
+        }
     }
 }

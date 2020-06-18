@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Test Cryptly</title>
+    <style>
+      body {
+        background-color: lightblue;
+      }
+
+      #direction {
+        float: right;
+      }
+      #direction img {
+        height: 100px;
+        width: 100px;
+      }
+
+      #main {
+        /* keep in center */
+        display: block;
+        float: left;
+        margin-left: 400px;
+      }
+
+      #main h1 {
+        text-align: center;
+        margin-top: 50px;
+        margin-bottom: 100px;
+      }
+
+      #main textarea {
+        border: 4px solid green;
+        font-size: x-large;
+        padding: 10px;
+        resize: none;
+      }
+
+      #footer {
+        width: 100%;
+        position: fixed;
+        bottom: 10px;
+        text-align: center;
+        font-size: x-large;
+      }
+
+      footer {
+        text-transform: uppercase;
+        color: gray;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="direction">
+      <img src="point-up.png" id="point-up" />
+      <h3>
+        Enable/Disable <br />
+        Cryptly.
+      </h3>
+    </div>
+
+    <div id="main">
+      <h1>Test Cryptly</h1>
+      <textarea
+        placeholder="Type your text here."
+        style="width: 800px; height: 400px;"
+      ></textarea>
+    </div>
+    <div id="footer">
+      <ul>
+        <li>Please disable your grammarly extension on this page.</li>
+      </ul>
+      <hr />
+      <footer>Privacy First</footer>
+    </div>
+  </body>
+</html>
