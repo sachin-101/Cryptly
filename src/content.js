@@ -1,4 +1,3 @@
-const CUSTOM_ATTR = 'unique_id';
 const DELAY = 1000; // One second
 const URL = window.location.href;
 const permissions = {
@@ -62,187 +61,7 @@ chrome.storage.sync.get(['blocked_urls'], data => {
  */
 const getTextAreaWithUniqueId = (unique_id) => document.querySelector(`textarea[${CUSTOM_ATTR}="${unique_id}"]`);
 
-/**
- * Overlays the sentiment emoji on bottom right of the Text Area element.
- *
- * Converts:
- * <textarea style="width: 400px; height: 200px;"></textarea>
- *
- * To:
- * <div style="width: 406px; height: 206px; position: relative;">
- *      <textarea style="width: 400px; height: 200px; position: absolute;"></textarea>
- *      <div style="right: 4px; bottom: 4px; position: absolute;">😄</div>
- * </div>
- */
-const addSentimentEmojiToTextArea = (textArea, sentiment) => {
-    textArea.style.position = 'absolute';
-    const originalParent = textArea.parentElement;
-    let resultEmojiDiv;
-    if (!(originalParent.id == 'cryptly_textArea_container')) {
-        console.log("here");
-        const container = document.createElement('div');
-        container.id = 'cryptly_textArea_container'; // to avoid creating container again and again
-        container.style.position = 'relative';
-        let add6Pixels = (size) => String(Number(size.replace('px', '')) + 6) + 'px'; // handy function
-        container.style.width = add6Pixels(textArea.style.width);
-        container.style.height = add6Pixels(textArea.style.height);
-        
-        // create a new emoji div
-        let emojiDiv = document.createElement('div');
-        emojiDiv.id = `cryptly_emoji_container_${textArea.getAttribute(CUSTOM_ATTR)}`;
-        emojiDiv.setAttribute(CUSTOM_ATTR, textArea.getAttribute(CUSTOM_ATTR));
-        emojiDiv.style.position = 'absolute';
-        emojiDiv.style.right = '4px';
-        emojiDiv.style.bottom = '4px';
-        
-        // Create result_emoji div
-        resultEmojiDiv = document.createElement('div');
-        resultEmojiDiv.setAttribute(CUSTOM_ATTR, textArea.getAttribute(CUSTOM_ATTR));
-        resultEmojiDiv.id = `result_emoji_${textArea.getAttribute(CUSTOM_ATTR)}`;
-        resultEmojiDiv.style.fontSize = '30px';
 
-        // Create emoji change div
-        let changeEmojiDiv = document.createElement('div');
-        changeEmojiDiv.id = `emoji_change_container_${textArea.getAttribute(CUSTOM_ATTR)}`;
-        changeEmojiDiv.style.position = 'absolute';
-        changeEmojiDiv.style.bottom = '40px';
-        changeEmojiDiv.style.right = '10px';
-        changeEmojiDiv.style.display = 'none';
-
-        // Add table to changeEmojiDiv
-        changeEmojiDiv.innerHTML = `
-            <table id='panel_${textArea.getAttribute(CUSTOM_ATTR)}' class='panel'>
-                <caption>Correct our prediction</caption>
-                <tr id='HAPPY'>
-                    <td id='emoji'>😄</td>
-                    <td>HAPPY</td>
-                    <!-- <td>70%</td> -->
-                </tr>
-                <tr id='SAD'>
-                    <td id='emoji'>😔</td>
-                    <td>SAD</td>
-                    <!-- <td>30%</td> -->
-                </tr>
-                <tr id='NEUTRAL'>
-                    <td id='emoji'>😶</td>
-                    <td>NEUTRAL</td>
-                    <!-- <td>0%</td> -->
-                </tr>
-            </table>
-        `
-
-        // done emoji button
-        let changeEmojiButton = document.createElement('button');
-        changeEmojiButton.setAttribute(CUSTOM_ATTR, textArea.getAttribute(CUSTOM_ATTR));
-        changeEmojiButton.id = 'btn_change_emoji';
-        changeEmojiButton.innerText = 'Done';
-
-        /* Add the necessary callback functions */
-        // Display change emoji panel upon clicking the emoji
-        resultEmojiDiv.onclick = e => {
-            console.log(e.target);
-            console.log(`cryptly_emoji_container_${e.target.getAttribute(CUSTOM_ATTR)}`);
-            let changeEmojiContainer = document.getElementById(`emoji_change_container_${e.target.getAttribute(CUSTOM_ATTR)}`);
-            if (changeEmojiContainer.style.display === 'none') {
-                changeEmojiContainer.style.display = 'block';
-                changeEmojiContainer.style.zIndex = 1;
-            }
-            console.log("hello change Emoji Container");
-        };
-
-        changeEmojiButton.onclick = e => {
-            let changeEmojiContainer = document.getElementById(`emoji_change_container_${e.target.getAttribute(CUSTOM_ATTR)}`);
-            console.log(changeEmojiContainer);
-            changeEmojiContainer.style.display = 'none';
-            changeEmojiContainer.style.zIndex = -1;
-            console.log("bye conaitner")
-        };
-
-        /* Add the above created elements in the proper order */
-        changeEmojiDiv.appendChild(changeEmojiButton);
-
-        emojiDiv.appendChild(changeEmojiDiv);
-        emojiDiv.appendChild(resultEmojiDiv);
-
-        // Add the containerNode as a peer to the textArea, right next to the textArea.
-        originalParent.insertBefore(container, textArea);
-        
-        // Move the textArea to inside the container;
-        container.appendChild(textArea);
-        
-        // Add the emoji Div right after the textArea;
-        container.appendChild(emojiDiv);
-
-        // Add the style sheet designing the panel
-        let style = document.createElement('style');
-        style.innerText = `
-            #cryptly_emoji_container {
-                border: 1px solid darkgray;
-                max-width: 300px;
-                padding: 5px;
-                /* display: flex; */
-                /* background-color: lightgray; */
-            }
-            
-            .panel {
-                border-collapse: collapse;
-            }
-            .panel, tr, td{ 
-                width: 100%; 
-                padding: 5px;
-                width: 100%;
-                font-size: large;
-                text-align: center;
-            }
-            .panel caption {
-                white-space: nowrap;
-                padding: 5px;
-            }
-            .panel tr:hover {
-                background-color: #b1afaf;
-            }
-
-            #btn_change_emoji {
-                margin: 5px;
-                width: auto;
-            }
-        `
-        document.getElementsByTagName("head")[0].appendChild(style);
-
-        // Add necessary scripts
-        emotion_to_emoji = {
-            'HAPPY': '😄',
-            'SAD': '😔',
-            'NEUTRAL': '😶'
-        }
-
-        let panel = document.getElementById(`panel_${textArea.getAttribute(CUSTOM_ATTR)}`);
-        let rows = panel.getElementsByTagName('tr');
-        for (let row of rows) {
-            row.addEventListener('click', event => {
-                document.getElementById(`result_emoji_${textArea.getAttribute(CUSTOM_ATTR)}`).innerHTML = 
-                        `${emotion_to_emoji[event.target.parentNode.id]} ${event.target.parentNode.id}`;
-            });
-        }
-
-
-    } else {
-        // Use previously created div.
-        resultEmojiDiv = document.getElementById(`result_emoji_${textArea.getAttribute(CUSTOM_ATTR)}`);
-    }
-    
-    console.log(sentiment);
-    if (sentiment === 'POSITIVE') {
-        resultEmojiDiv.textContent = `😄 HAPPY`;
-    } else if (sentiment === 'NEGATIVE') {
-        resultEmojiDiv.textContent = `😔 SAD`;
-    } else {
-        resultEmojiDiv.textContent = `😶 NEUTRAL`;
-    }
-
-    // return focus back to text area, to continue typing
-    textArea.focus();
-};
 
 /**
  * Wraps a function to perform debouncing.
@@ -289,7 +108,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message && message.action && message.textAreaId && message.prediction) {
         if (message.action == 'TEXT_SENTIMENT_CLASSIFIED') {
             const textArea = getTextAreaWithUniqueId(message.textAreaId);
-            addSentimentEmojiToTextArea(textArea, message.prediction);
+            displaySentiment(textArea, message.prediction, message.textAreaId);
+            textArea.focus();   // return focus back to text area, to continue typing
         }
     }
 });
@@ -320,3 +140,224 @@ chrome.storage.onChanged.addListener((changes, _) => {
         });
     }
 })
+
+
+// **********************************************************
+/**
+ * Overlays the sentiment emoji on bottom right of the Text Area element.
+ *
+ * Converts:
+ * <textarea style="width: 400px; height: 200px;"></textarea>
+ *
+ * To:
+ * <div style='width: 406px; height: 206px; position: relative;'>
+        <textarea style='width: 400px; height: 200px; position: absolute;'></textarea>
+        <div style='right: 8px; bottom: 8px; position: absolute;'>
+            <div id='result_emoji' onclick="displayPopup()">😄</div>
+            <div class='popup_container' style='position: absolute; bottom: 40px; right: 10px; display: none;'>
+                <table class='popup'>
+                    <caption>Correct our prediction</caption>
+                    <tr id='happy'>
+                        <td id='emoji'>😄</td>
+                        <td>Happy</td>
+                        <td>70%</td>
+                    </tr>
+                    <tr id='sad'>
+                        <td id='emoji'>😔</td>
+                        <td>Sed</td>
+                        <td>30%</td>
+                    </tr>
+                    <tr id='neutral'>
+                        <td id='emoji'>😶</td>
+                        <td>???</td>
+                        <td>0%</td>
+                    </tr>
+                </table>
+                <button id='btn_save_change' onclick="hidePopup()">Done</button>
+            </div>
+        </div>
+    </div>
+ */
+
+const CUSTOM_ATTR = 'unique_id'; 
+
+const TEXTAREA_CONTAINER_NAME    = 'cryptlyTextAreaContainer';
+const EMOJI_CONTAINER_NAME       = 'cryptlyEmojiContainer';
+const PRED_EMOJI_NAME            = 'cryptlyPredEmoji';
+const EMOJI_PANEL_NAME           = 'cryptlyEmojiPanel';
+const EMOJI_PANEL_TABLE_NAME     = 'cryptlyEmojiPanelTable';
+const EMOJI_PANEL_TABLE_ROW_NAME = 'crptlyEmojiPanelTableRow';
+const SAVE_EMOJI_BUTTON_NAME     = 'cryptlySaveEmoji';
+
+const add6Pixels = (size) => String(Number(size.replace('px', '')) + 6) + 'px'; // handy function
+
+pred_to_emoji = {
+    'POSITIVE': '😄',
+    'NEGATIVE': '😔'
+}
+
+pred_to_emotion = {
+    'POSITIVE': 'HAPPY',
+    'NEGATIVE': 'SAD'
+}
+
+const showPanel = e => {
+    let emojiPanel = document.getElementById(`${EMOJI_PANEL_NAME}_${e.target.getAttribute(CUSTOM_ATTR)}`);
+    if (emojiPanel.style.display === 'none') {
+        emojiPanel.style.display = 'block';
+        emojiPanel.style.zIndex = 1;
+    }
+}
+
+const hidePanel = e => {
+    let emojiPanel = document.getElementById(`${EMOJI_PANEL_NAME}_${e.target.getAttribute(CUSTOM_ATTR)}`);
+    emojiPanel.style.display = 'none';
+    emojiPanel.style.zIndex = -1;
+}
+
+/** @todo: Remove emotion_to_emoji, and rather use a custom attribute of row. */
+const changeEmoji = e => {
+    let pred = e.target.parentNode.getAttribute('sentiment');    
+    let predEmoji = document.getElementById(`${PRED_EMOJI_NAME}_${e.target.parentNode.getAttribute(CUSTOM_ATTR)}`);
+    predEmoji.innerHTML = `${pred_to_emoji[pred]} ${pred_to_emotion[pred]}`;
+}
+
+const createElement = (tagName, elementName, uniqueId) => {
+    let element = document.createElement(tagName);
+    element.id = `${elementName}_${uniqueId}`;
+    element.className = elementName;
+    element.setAttribute(CUSTOM_ATTR, uniqueId);
+    return element;
+}
+
+/**
+ * 
+ * @param {DOMElement} textArea 
+ * @param {Array} sentiments 
+ * @param {number} textAreaId 
+ */
+const displaySentiment = (textArea, predictions, textAreaId) => {
+    
+    textArea.style.position = 'absolute';
+    const uniqueId = textAreaId;
+
+    const originalParent = textArea.parentElement;
+    
+    let predEmoji;
+
+    if (!(originalParent.id == TEXTAREA_CONTAINER_NAME)) {
+        
+        console.log('Wrapping textArea in Cryptly container.');
+        
+        const tAreaContainer = document.createElement('div');
+        tAreaContainer.id = TEXTAREA_CONTAINER_NAME; // to avoid creating container again and again
+        tAreaContainer.style.position = 'relative';
+        tAreaContainer.style.width = add6Pixels(textArea.style.width);
+        tAreaContainer.style.height = add6Pixels(textArea.style.height);
+        
+        let emojiContainer = createElement('div', EMOJI_CONTAINER_NAME, uniqueId);  // To hold emoji and panel
+        predEmoji = createElement('div', PRED_EMOJI_NAME, uniqueId);    // To display predicted emoji
+        let emojiPanel = createElement('div', EMOJI_PANEL_NAME, uniqueId);  // Emoji display panel
+        let emojiPanelTable = document.createElement('table', EMOJI_PANEL_TABLE_NAME, uniqueId);    // Create emoji table to add to panel
+        emojiPanelTable.className = EMOJI_PANEL_TABLE_NAME;
+        emojiPanelTable.innerHTML = '<caption>Correct our prediction</caption>';    // Add caption
+        // Certain inline parameters which needs to be modified later
+        emojiPanel.style.display = 'none';
+
+        // Add rows to emoji panel table
+        let i = 0;
+        for (let pred in predictions) {
+            let tableRow = document.createElement('tr');
+            tableRow.id = `${EMOJI_PANEL_TABLE_ROW_NAME}_${uniqueId}_${i}`;
+            tableRow.className = EMOJI_PANEL_TABLE_ROW_NAME;
+            tableRow.setAttribute(CUSTOM_ATTR, uniqueId);
+            tableRow.setAttribute('sentiment', pred);
+            tableRow.innerHTML = `<td id='emoji'>${pred_to_emoji[pred]}</td><td>${pred_to_emotion[pred]}</td><td>${predictions[pred].toPrecision(2)}</td>`
+            tableRow.onclick = changeEmoji;     // add callback function
+            emojiPanelTable.appendChild(tableRow);
+            i++;
+        }
+
+        // Create Save emoji button to add to panel
+        let saveEmoji = createElement('button', SAVE_EMOJI_BUTTON_NAME, uniqueId);
+        saveEmoji.innerText = 'Save';
+
+        /* @TODO: Move it to another file.
+        Add styles sheet to style the above added elements 
+        */
+        let style = document.createElement('style');
+        style.innerHTML = 
+        `   .${PRED_EMOJI_NAME} {
+                font-size: 30px;
+            }
+
+            .${EMOJI_CONTAINER_NAME} {
+                position: absolute;
+                right: 4px;
+                bottom: 4px;   
+            }
+
+            .${EMOJI_PANEL_NAME} {
+                border: 1px solid darkgray;
+                max-width: 300px;
+                padding: 5px;
+
+                /* Set position of panel w.r.t to textArea */
+                position: absolute;
+                bottom: 40px;
+                right: 10px;
+            }
+
+            .${EMOJI_PANEL_TABLE_NAME} {
+                border-collapse: collapse;
+            }
+            .${EMOJI_PANEL_TABLE_NAME}, tr, td{ 
+                width: 100%; 
+                padding: 5px;
+                width: 100%;
+                font-size: x-large;
+                text-align: center;
+            }
+
+            .${EMOJI_PANEL_TABLE_NAME} caption {
+                white-space: nowrap;
+                padding: 5px;
+            }
+
+            .${EMOJI_PANEL_TABLE_NAME} tr:hover {
+                background-color: #b1afaf;
+            }
+
+            .${SAVE_EMOJI_BUTTON_NAME} {
+                font-size: x-large;
+                margin: 5px;
+                width: auto;
+            }
+        `
+        document.getElementsByTagName('head')[0].appendChild(style);
+        
+        /* Attach event listeners */
+        predEmoji.onclick = showPanel;  // show panel upon clicking predicted emoji
+        saveEmoji.onclick = hidePanel;  // hide panel upon clicking save emoji button
+
+        /* Attach the above created elements to their parents */
+        emojiPanel.appendChild(emojiPanelTable);
+        emojiPanel.appendChild(saveEmoji);
+        emojiContainer.appendChild(predEmoji);
+        emojiContainer.appendChild(emojiPanel);
+        originalParent.insertBefore(tAreaContainer, textArea);  // Add cryptly container as a peer to the textArea
+        tAreaContainer.appendChild(textArea);   // Move the textArea to inside the container
+        tAreaContainer.appendChild(emojiContainer); // Add the emoji Container right after the textArea
+
+    } else {    // Use previously created div.
+        predEmoji = document.getElementById(`${PRED_EMOJI_NAME}_${uniqueId}`);
+    }
+    
+    let maxPred = 0, predSentiment;
+    for(let pred in predictions) {
+        if (predictions[pred] > maxPred) {
+            predSentiment = pred;
+        }
+    }
+    predEmoji.textContent = `${pred_to_emoji[predSentiment]} ${pred_to_emotion[predSentiment]}`;
+};
