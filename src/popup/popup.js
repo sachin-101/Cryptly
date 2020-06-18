@@ -2,8 +2,8 @@
 /**
  * Set the ui of the toggle accordingly
  */
-chrome.storage.sync.get(["urls"], data => {
-    let blocked_urls = data.urls;
+chrome.storage.sync.get(['blocked_urls'], data => {
+    let blocked_urls = data.blocked_urls;    
     chrome.tabs.query({
         active: true,
         currentWindow: true
@@ -18,8 +18,8 @@ chrome.storage.sync.get(["urls"], data => {
  * Change urls allowed on toggle
  */
 document.getElementById('switch_sent').onchange = e => {
-    chrome.storage.sync.get(["urls"], data => {
-        let blocked_urls = data.urls;
+    chrome.storage.sync.get(["blocked_urls"], data => {
+        let blocked_urls = data.blocked_urls;
         chrome.tabs.query({
             active: true,
             currentWindow: true
@@ -30,7 +30,7 @@ document.getElementById('switch_sent').onchange = e => {
             } else if (blocked_urls.indexOf(url) === -1 && !e.target.checked) {
                 blocked_urls.push(url);
             }
-            chrome.storage.sync.set({blocked_urls});
+            chrome.storage.sync.set({'blocked_urls': blocked_urls});
         })
     })
 }
