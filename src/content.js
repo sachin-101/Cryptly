@@ -77,8 +77,9 @@ const getTextAreaWithUniqueId = (unique_id) => document.querySelector(`textarea[
 const addSentimentEmojiToTextArea = (textArea, sentiment) => {
     textArea.style.position = 'absolute';
     const originalParent = textArea.parentElement;
-    let emojiDiv;
+    let resultEmojiDiv;
     if (!(originalParent.id == 'cryptly_textArea_container')) {
+        console.log("here");
         const container = document.createElement('div');
         container.id = 'cryptly_textArea_container'; // to avoid creating container again and again
         container.style.position = 'relative';
@@ -87,13 +88,82 @@ const addSentimentEmojiToTextArea = (textArea, sentiment) => {
         container.style.height = add6Pixels(textArea.style.height);
         
         // create a new emoji div
-        emojiDiv = document.createElement('div');
+        let emojiDiv = document.createElement('div');
         emojiDiv.id = `cryptly_emoji_container_${textArea.getAttribute(CUSTOM_ATTR)}`;
+        emojiDiv.setAttribute(CUSTOM_ATTR, textArea.getAttribute(CUSTOM_ATTR));
         emojiDiv.style.position = 'absolute';
         emojiDiv.style.right = '4px';
         emojiDiv.style.bottom = '4px';
-        emojiDiv.style.fontSize = '40px';
         
+        // Create result_emoji div
+        resultEmojiDiv = document.createElement('div');
+        resultEmojiDiv.setAttribute(CUSTOM_ATTR, textArea.getAttribute(CUSTOM_ATTR));
+        resultEmojiDiv.id = `result_emoji_${textArea.getAttribute(CUSTOM_ATTR)}`;
+        resultEmojiDiv.style.fontSize = '30px';
+
+        // Create emoji change div
+        let changeEmojiDiv = document.createElement('div');
+        changeEmojiDiv.id = `emoji_change_container_${textArea.getAttribute(CUSTOM_ATTR)}`;
+        changeEmojiDiv.style.position = 'absolute';
+        changeEmojiDiv.style.bottom = '40px';
+        changeEmojiDiv.style.right = '10px';
+        changeEmojiDiv.style.display = 'none';
+
+        // Add table to changeEmojiDiv
+        changeEmojiDiv.innerHTML = `
+            <table id='panel_${textArea.getAttribute(CUSTOM_ATTR)}' class='panel'>
+                <caption>Correct our prediction</caption>
+                <tr id='HAPPY'>
+                    <td id='emoji'>😄</td>
+                    <td>HAPPY</td>
+                    <!-- <td>70%</td> -->
+                </tr>
+                <tr id='SAD'>
+                    <td id='emoji'>😔</td>
+                    <td>SAD</td>
+                    <!-- <td>30%</td> -->
+                </tr>
+                <tr id='NEUTRAL'>
+                    <td id='emoji'>😶</td>
+                    <td>NEUTRAL</td>
+                    <!-- <td>0%</td> -->
+                </tr>
+            </table>
+        `
+
+        // done emoji button
+        let changeEmojiButton = document.createElement('button');
+        changeEmojiButton.setAttribute(CUSTOM_ATTR, textArea.getAttribute(CUSTOM_ATTR));
+        changeEmojiButton.id = 'btn_change_emoji';
+        changeEmojiButton.innerText = 'Done';
+
+        /* Add the necessary callback functions */
+        // Display change emoji panel upon clicking the emoji
+        resultEmojiDiv.onclick = e => {
+            console.log(e.target);
+            console.log(`cryptly_emoji_container_${e.target.getAttribute(CUSTOM_ATTR)}`);
+            let changeEmojiContainer = document.getElementById(`emoji_change_container_${e.target.getAttribute(CUSTOM_ATTR)}`);
+            if (changeEmojiContainer.style.display === 'none') {
+                changeEmojiContainer.style.display = 'block';
+                changeEmojiContainer.style.zIndex = 1;
+            }
+            console.log("hello change Emoji Container");
+        };
+
+        changeEmojiButton.onclick = e => {
+            let changeEmojiContainer = document.getElementById(`emoji_change_container_${e.target.getAttribute(CUSTOM_ATTR)}`);
+            console.log(changeEmojiContainer);
+            changeEmojiContainer.style.display = 'none';
+            changeEmojiContainer.style.zIndex = -1;
+            console.log("bye conaitner")
+        };
+
+        /* Add the above created elements in the proper order */
+        changeEmojiDiv.appendChild(changeEmojiButton);
+
+        emojiDiv.appendChild(changeEmojiDiv);
+        emojiDiv.appendChild(resultEmojiDiv);
+
         // Add the containerNode as a peer to the textArea, right next to the textArea.
         originalParent.insertBefore(container, textArea);
         
@@ -102,18 +172,72 @@ const addSentimentEmojiToTextArea = (textArea, sentiment) => {
         
         // Add the emoji Div right after the textArea;
         container.appendChild(emojiDiv);
+
+        // Add the style sheet designing the panel
+        let style = document.createElement('style');
+        style.innerText = `
+            #cryptly_emoji_container {
+                border: 1px solid darkgray;
+                max-width: 300px;
+                padding: 5px;
+                /* display: flex; */
+                /* background-color: lightgray; */
+            }
+            
+            .panel {
+                border-collapse: collapse;
+            }
+            .panel, tr, td{ 
+                width: 100%; 
+                padding: 5px;
+                width: 100%;
+                font-size: large;
+                text-align: center;
+            }
+            .panel caption {
+                white-space: nowrap;
+                padding: 5px;
+            }
+            .panel tr:hover {
+                background-color: #b1afaf;
+            }
+
+            #btn_change_emoji {
+                margin: 5px;
+                width: auto;
+            }
+        `
+        document.getElementsByTagName("head")[0].appendChild(style);
+
+        // Add necessary scripts
+        emotion_to_emoji = {
+            'HAPPY': '😄',
+            'SAD': '😔',
+            'NEUTRAL': '😶'
+        }
+
+        let panel = document.getElementById(`panel_${textArea.getAttribute(CUSTOM_ATTR)}`);
+        let rows = panel.getElementsByTagName('tr');
+        for (let row of rows) {
+            row.addEventListener('click', event => {
+                document.getElementById(`result_emoji_${textArea.getAttribute(CUSTOM_ATTR)}`).innerHTML = 
+                        `${emotion_to_emoji[event.target.parentNode.id]} ${event.target.parentNode.id}`;
+            });
+        }
+
+
     } else {
         // Use previously created div.
-        emojiDiv = document.getElementById(`cryptly_emoji_container_${textArea.getAttribute(CUSTOM_ATTR)}`);
+        resultEmojiDiv = document.getElementById(`result_emoji_${textArea.getAttribute(CUSTOM_ATTR)}`);
     }
     
     console.log(sentiment);
     if (sentiment === 'POSITIVE') {
-        emojiDiv.textContent = `😄 HAPPY`;
+        resultEmojiDiv.textContent = `😄 HAPPY`;
     } else if (sentiment === 'NEGATIVE') {
-        emojiDiv.textContent = `😔 SAD`;
+        resultEmojiDiv.textContent = `😔 SAD`;
     } else {
-        emojiDiv.textContent = `😶 ???`;
+        resultEmojiDiv.textContent = `😶 NEUTRAL`;
     }
 
     // return focus back to text area, to continue typing
