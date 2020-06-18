@@ -37,7 +37,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             .then(prediction => {
                 chrome.tabs.sendMessage(sender.tab.id, {
                     action: 'TEXT_SENTIMENT_CLASSIFIED',
-                    prediction: prediction > 0.5 ? 'POSITIVE' : 'NEGATIVE',
+                    prediction: {'POSITIVE': prediction, 'NEGATIVE': 1 - prediction},
                     textAreaId: request.textAreaId
                 });
             })
