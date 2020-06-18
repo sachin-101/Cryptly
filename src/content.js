@@ -92,6 +92,7 @@ const addSentimentEmojiToTextArea = (textArea, sentiment) => {
         emojiDiv.style.position = 'absolute';
         emojiDiv.style.right = '4px';
         emojiDiv.style.bottom = '4px';
+        emojiDiv.style.fontSize = '40px';
         
         // Add the containerNode as a peer to the textArea, right next to the textArea.
         originalParent.insertBefore(container, textArea);
@@ -110,7 +111,7 @@ const addSentimentEmojiToTextArea = (textArea, sentiment) => {
     if (sentiment === 'POSITIVE') {
         emojiDiv.textContent = `😄 HAPPY`;
     } else if (sentiment === 'NEGATIVE') {
-        emojiDiv.textContent = `😔 SED`;
+        emojiDiv.textContent = `😔 SAD`;
     } else {
         emojiDiv.textContent = `😶 ???`;
     }
