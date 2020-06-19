@@ -129,6 +129,7 @@ chrome.storage.onChanged.addListener((changes, _) => {
             el.removeEventListener('input', debounceOnTextChange)
         });
         document.removeEventListener('animationstart', animationStartListenser);
+        hideEmojiContainers();
     } else if (changes.blocked_urls.newValue.indexOf(URL) === -1 && !permissions.USE_CRYPTLY) {
         
         console.log("Cryptly started on this site.");
@@ -243,7 +244,7 @@ const displaySentiment = (textArea, predictions, textAreaId) => {
 
     const originalParent = textArea.parentElement;
     
-    let predEmoji, emojiPanelTable;
+    let emojiContainer, predEmoji, emojiPanelTable;
 
     if (!(originalParent.id == TEXTAREA_CONTAINER_NAME)) {
         
@@ -255,7 +256,7 @@ const displaySentiment = (textArea, predictions, textAreaId) => {
         tAreaContainer.style.width = add6Pixels(textArea.style.width);
         tAreaContainer.style.height = add6Pixels(textArea.style.height);
         
-        let emojiContainer = createElement('div', EMOJI_CONTAINER_NAME, uniqueId);  // To hold emoji and panel
+        emojiContainer = createElement('div', EMOJI_CONTAINER_NAME, uniqueId);  // To hold emoji and panel
         predEmoji = createElement('div', PRED_EMOJI_NAME, uniqueId);    // To display predicted emoji
         let emojiPanel = createElement('div', EMOJI_PANEL_NAME, uniqueId);  // Emoji display panel
         emojiPanelTable = document.createElement('table', EMOJI_PANEL_TABLE_NAME, uniqueId);    // Create emoji table to add to panel
@@ -349,10 +350,15 @@ const displaySentiment = (textArea, predictions, textAreaId) => {
         tAreaContainer.appendChild(textArea);   // Move the textArea to inside the container
         tAreaContainer.appendChild(emojiContainer); // Add the emoji Container right after the textArea
 
-    } else {    // Use previously created div.
-        predEmoji = document.getElementById(`${PRED_EMOJI_NAME}_${uniqueId}`);
     }
-    
+
+    // show emoji container
+    emojiContainer = document.getElementById(`${EMOJI_CONTAINER_NAME}_${uniqueId}`);
+    if (emojiContainer.style.display === 'none') {
+        emojiContainer.style.display = 'block';
+    }
+
+    // updated panel with new confidences  
     let maxPred = 0, predSentiment;
     for(let pred in predictions) {
         if (predictions[pred] > maxPred) {
@@ -366,5 +372,15 @@ const displaySentiment = (textArea, predictions, textAreaId) => {
             row.innerHTML = `<td>${pred_to_emoji[pred]}</td><td>${pred_to_emotion[pred]}</td><td>${predictions[pred].toPrecision(2)}</td>`
         }
     }
+    
+    // Display predicted emoji
+    predEmoji = document.getElementById(`${PRED_EMOJI_NAME}_${uniqueId}`);
     predEmoji.textContent = `${pred_to_emoji[predSentiment]} ${pred_to_emotion[predSentiment]}`;
+};
+
+const hideEmojiContainers = () => {
+    let emojiContainers = document.getElementsByClassName(EMOJI_CONTAINER_NAME);
+    for (let container of emojiContainers) {
+        container.style.display = 'none';
+    }
 };
