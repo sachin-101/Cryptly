@@ -280,11 +280,11 @@ const startFL = async (url, modelName, modelVersion) => {
                 // const endIndex = startIndex + chunkSize;
 
                 const textBatch = texts.slice(startIndex, chunkSize);
-                const labelBatch = texts.slice(startIndex, chunkSize);
+                const labelBatch = labels.slice(startIndex, chunkSize);
                 
                 // Map word indices to word embeddings
                 const embeddingBatch = flattenLayer.apply(embeddingLayer.apply(textBatch));
-                console.log("Flattened Word Embeddings"); embeddingBatch.print();
+                // console.log("Flattened Word Embeddings"); embeddingBatch.print();
 
                 // // Execute the plan and get updated model params back.
                 let [loss, acc, ...updatedModelParams] = await job.plans[
@@ -297,11 +297,11 @@ const startFL = async (url, modelName, modelVersion) => {
                     lr,
                     ...modelParams
                 );
-                
+
                 console.log({
-                    loss: loss,
-                    acc: acc,
-                })
+                    loss: await loss.array(),
+                    acc: await acc.array(),
+                });
                 
                 // Use updated model params in the next cycle.
                 for (let i = 0; i < modelParams.length; i++) {
@@ -325,19 +325,21 @@ const startFL = async (url, modelName, modelVersion) => {
                 labelBatch.dispose();
             }
         
-            // Clear local Storage ?
+            // Free GPU memor
+            texts.dispose();
+            labels.dispose();
 
+            // TODO: Remove training data from local data as well ?
             // TODO: Save model for loal inference
             
-
             // TODO; protocol execution
             // job.protocols['secure_aggregation'].execute();
         
             // Calc model diff.
-            // const modelDiff = await model.createSerializedDiff(modelParams);
+            const modelDiff = await model.createSerializedDiff(modelParams);
         
             // Report diff.
-            // await job.report(modelDiff);
+            await job.report(modelDiff);
             console.log('Cycle is done!');
         });
 
