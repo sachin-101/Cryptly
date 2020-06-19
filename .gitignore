@@ -5,3 +5,4 @@ node_modules/
 .vscode
 resources/
 package-lock.json
+server/yelp_polarity_review_2

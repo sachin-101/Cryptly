@@ -357,6 +357,7 @@ const displaySentiment = (textArea, predictions, textAreaId) => {
     for(let pred in predictions) {
         if (predictions[pred] > maxPred) {
             predSentiment = pred;
+            maxPred = predictions[pred];
         }
 
         // update the panel table rows with latest predictions
