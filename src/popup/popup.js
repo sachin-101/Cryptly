@@ -1,4 +1,5 @@
 
+console.log("popup");
 /**
  * Set the ui of the toggle accordingly
  */
@@ -32,5 +33,17 @@ document.getElementById('switch_sent').onchange = e => {
             }
             chrome.storage.sync.set({'blocked_urls': blocked_urls});
         })
+    })
+}
+
+/**
+ * Send message to background script to start Federated Learning process
+ * upon user request.
+ */
+document.getElementById('new_model_button').onclick = e => {
+    let version = document.getElementById('version').value;    
+    chrome.runtime.sendMessage({
+        action: 'START_FL',
+        version: version
     })
 }

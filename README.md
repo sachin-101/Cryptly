@@ -2,14 +2,14 @@
 
 -   Clone the repo.
 -   Run:
-    -   `yarn`
-    -   `yarn build`
+    -   `npm install`
+    -   `npm run build`
 -   Open `/dist` folder in browser add-on extensions.
 
 ### Development:
 
 -   Do modifications in `/src` folder.
--   Run `yarn build`.
+-   Run `npm run build`.
 -   Refresh the extension.
 
 ### Note:

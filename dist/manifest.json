@@ -1,6 +1,6 @@
 {
     "name": "Cryptly",
-    "version": "0.7.0",
+    "version": "0.8.3",
     "description": "An encrypted version of grammarly",
     "manifest_version": 2,
     "background": {

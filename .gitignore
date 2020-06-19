@@ -3,5 +3,7 @@ yarn.lock
 dist/src/*
 node_modules/
 .vscode
+resources/
 package-lock.json
 server/yelp_polarity_review_2
+Grid/.ipynb_checkpoints/
