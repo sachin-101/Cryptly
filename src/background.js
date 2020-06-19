@@ -258,11 +258,11 @@ const startFL = async (url, modelName, modelVersion) => {
             });
             
             // Embedding layer
-            const embeddingLayer = sentimentClassifier.model.getLayer(name='embedding_4');
+            const embeddingLayer = sentimentClassifier.model.getLayer(name='embedding_1');
             embeddingLayer.trainable = false;   // Non-trainable
             
             // Flatten layer
-            const flattenLayer = sentimentClassifier.model.getLayer(name='flatten');
+            const flattenLayer = sentimentClassifier.model.getLayer(name='flatten_1');
 
             // Copy model to train it.
             let modelParams = [];
