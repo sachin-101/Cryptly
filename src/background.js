@@ -2,11 +2,14 @@ import 'babel-polyfill';
 import * as tf from '@tensorflow/tfjs';
 import { Pipeline } from './pipeline';
 import { Syft } from '@openmined/syft.js';
+import { oneHot, losses } from '@tensorflow/tfjs';
 
 const FIVE_SECONDS_IN_MS = 5000;
+
+// Make sure this is consistent with the Creat Plan.ipynb
 const NEGATIVE = 0;
-const NEUTRAL = 1;
-const POSITIVE = 2;
+const POSITIVE = 1;
+// const NEUTRAL = 2;
 
 /**
  * Check if blocked_urls exist in storage, if not
@@ -68,7 +71,7 @@ class SentimentClassifier {
         console.log('Loading model...');
         try {
             this.model = await tf.loadLayersModel(MODEL_URL);
-            console.log("Model loaded.")
+            console.log("Model loaded."); this.model.summary();            
         } catch (e){
             console.error(`Unable to load model from URL: ${MODEL_URL}`);
             console.error(e);
@@ -149,10 +152,8 @@ chrome.runtime.onMessage.addListener( async (request, sender, sendResponse) => {
         startFL("ws://localhost:5001", "Cryptly", request.version);
         // Some testing.
         // chrome.storage.local.get(['trainData'], async (data) => {
-
         //     let rawTexts = data.trainData.texts;
         //     let rawLabels = data.trainData.labels;
-            
         //     console.log("rawTexts", rawTexts);
         //     console.log("rawLabels", rawLabels);
             
@@ -186,7 +187,6 @@ chrome.runtime.onMessage.addListener( async (request, sender, sendResponse) => {
         //         let curProText = await pipeline.process(rawTexts[i])
         //         processedTexts2.push(curProText);
         //     }
-
         //     try {
         //         console.log("const texts = tf.tensor(processedTexts);");
         //         const texts = tf.tensor(processedTexts2);
@@ -194,7 +194,6 @@ chrome.runtime.onMessage.addListener( async (request, sender, sendResponse) => {
         //     } catch (err) {
         //         console.log(err);
         //     }
-
         // });    
     }         
 });
@@ -206,7 +205,7 @@ const startFL = async (url, modelName, modelVersion) => {
 
     job.start();
 
-    // Writing a callabck hell
+    // TODO: Replace callback functions with promises and async/await.
     job.on('accepted', ({ model, clientConfig }) => {
         console.log('Accepted into cycle!');
 
@@ -217,18 +216,23 @@ const startFL = async (url, modelName, modelVersion) => {
 
             let rawTexts = data.trainData.texts;
             let rawLabels = data.trainData.labels;
-            console.log(rawTexts);
             
             let processedTexts = []
             for(let i = 0; i < rawTexts.length; i++) {
                 processedTexts.push(await pipeline.process(rawTexts[i]));
             }
+            
+            let oneHotLabels = []
+            for(let i = 0; i < rawLabels.length; i++) {
+                oneHotLabels[i] = [0, 0];
+                oneHotLabels[i][rawLabels[i]] = 1;
+            }
 
             const texts = tf.tensor(processedTexts);
-            const labels = tf.tensor(rawLabels);
+            const labels = tf.tensor(oneHotLabels);
 
-            console.log('Texts'); texts.print();
-            console.log('labels'); labels.print();
+            console.log('Local training data'); texts.print();
+            console.log('Local training labels '); labels.print();
             
             // todo: Shuffling the data
 
@@ -253,6 +257,13 @@ const startFL = async (url, modelName, modelVersion) => {
                 'numUpdates': numUpdates
             });
             
+            // Embedding layer
+            const embeddingLayer = sentimentClassifier.model.getLayer(name='embedding_4');
+            embeddingLayer.trainable = false;   // Non-trainable
+            
+            // Flatten layer
+            const flattenLayer = sentimentClassifier.model.getLayer(name='flatten');
+
             // Copy model to train it.
             let modelParams = [];
             for (let param of model.params) {
@@ -260,64 +271,66 @@ const startFL = async (url, modelName, modelVersion) => {
             }            
             
             // Main training loop.
-            // for (let update = 0, batch = 0, epoch = 0; update < numUpdates; update++) {
-            //     // todo: extract shuffled indices
-            //     // Slice a batch.
-            //     // const chunkSize = Math.min(batchSize, texts.shape[0] - batch * batchSize);
-            //     // const startIndex = batch * batchSize;
-            //     // const endIndex = startIndex + chunkSize;
-
-            //     // const textBatch = tf.tensor2d({'values': texts.slice(startIndex, endIndex), 
-            //     //                                 'dtype': 'int32'
-            //     //                             });
-            //     // const labelBatch = tf.tensor2d({'values': labels.slice(startIndex, endIndex),
-            //     //                                  'dtype': 'int32'
-            //     //                             });
+            for (let update = 0, batch = 0, epoch = 0; update < numUpdates; update++) {
+                // todo: extract shuffled indices
                 
-            //     // Benefits of using plan -> 1. Let's us update the entire model architecture
-            //     //                            2. Is very robust ?
-                
-            //     // cons: -> Right now it might throw a lot of errors.
+                // Slice a batch.
+                const chunkSize = Math.min(batchSize, texts.shape[0] - batch * batchSize);
+                const startIndex = batch * batchSize;
+                // const endIndex = startIndex + chunkSize;
 
-            //     // Execute the plan and get updated model params back.
-            //     // let [loss, acc, ...updatedModelParams] = await job.plans[
-            //     //     'training_plan'
-            //     // ].execute(
-            //     //     job.worker,
-            //     //     textBatch,
-            //     //     labelBatch,
-            //     //     chunkSize,
-            //     //     lr,
-            //     //     ...modelParams
-            //     // );
+                const textBatch = texts.slice(startIndex, chunkSize);
+                const labelBatch = texts.slice(startIndex, chunkSize);
+                
+                // Map word indices to word embeddings
+                const embeddingBatch = flattenLayer.apply(embeddingLayer.apply(textBatch));
+                console.log("Flattened Word Embeddings"); embeddingBatch.print();
+
+                // // Execute the plan and get updated model params back.
+                let [loss, acc, ...updatedModelParams] = await job.plans[
+                    'training_plan'
+                ].execute(
+                    job.worker,
+                    embeddingBatch,
+                    labelBatch,
+                    chunkSize,
+                    lr,
+                    ...modelParams
+                );
+                
+                console.log({
+                    loss: loss,
+                    acc: acc,
+                })
+                
+                // Use updated model params in the next cycle.
+                for (let i = 0; i < modelParams.length; i++) {
+                    modelParams[i].dispose();
+                    modelParams[i] = updatedModelParams[i];
+                }
         
-            //     // Use updated model params in the next cycle.
-            //     for (let i = 0; i < modelParams.length; i++) {
-            //         modelParams[i].dispose();
-            //         modelParams[i] = updatedModelParams[i];
-            //     }
+                batch++;
         
-            //     batch++;
+                // Check if we're out of batches (end of epoch).
+                if (batch === numBatches) {
+                    batch = 0;
+                    epoch++;
+                }
         
-            //     // Check if we're out of batches (end of epoch).
-            //     if (batch === numBatches) {
-            //         batch = 0;
-            //         epoch++;
-            //     }
-        
-            //     // Free GPU memory. ? How is it GPU ? Is it cause tensorflow.js runs on WEBGL ?
-            //     acc.dispose();
-            //     loss.dispose();
-            //     textBatch.dispose();
-            //     labelBatch.dispose();
-            // }
+                // Free GPU memory. ? How is it GPU ? Is it cause tensorflow.js runs on WEBGL ?
+                acc.dispose();
+                loss.dispose();
+                embeddingBatch.dispose();
+                textBatch.dispose();
+                labelBatch.dispose();
+            }
         
             // Clear local Storage ?
 
-            // Save model for loal inference
+            // TODO: Save model for loal inference
             
 
-            // TODO protocol execution
+            // TODO; protocol execution
             // job.protocols['secure_aggregation'].execute();
         
             // Calc model diff.
@@ -326,7 +339,6 @@ const startFL = async (url, modelName, modelVersion) => {
             // Report diff.
             // await job.report(modelDiff);
             console.log('Cycle is done!');
-        
         });
 
     });
