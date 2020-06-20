@@ -38,18 +38,23 @@ A privacy-preserving browser extension.
 
 ## Demo:
 
+
 <figure>
     <img src='./art/image1.png' alt='An image demonstrating basic function of cryptly.'/>
     <figcaption>
     Type in the TextArea and Cryptly will display an emoji depicting the sentiment of your input text. You can enable/disale Cryptly on a website using the extension popup.
     </figcaption>
+    <br>
+    <hr>
 </figure>
 
 <figure>
-    <img src='art/image2.png' alt='An image demonstrating how to correct Cryptly predictions.'/>
+    <img src='./art/image2.png' alt='An image demonstrating how to correct Cryptly predictions.'/>
     <figcaption>
     You can correct Cryptly's predictions. The corrections are stored locally and serve as training data for Cryptly models.
     </figcaption>
+    <br>
+    <hr>
 </figure>
 
 
@@ -58,6 +63,8 @@ A privacy-preserving browser extension.
     <figcaption>
     You can pull the updated model from grid using the extension popup. This updated model has been trained on the corrections provided by multiple users of Cryptly. The pulled model replaces your local model and provides better predictions.
     </figcaption>
+    <br>
+    <hr>
 </figure>
 
 
