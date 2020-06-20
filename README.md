@@ -35,6 +35,32 @@ A privacy-preserving browser extension.
 - Click on `Pull new model` to fetch the hosted model and train on local data. (Note: As of now the fetched model trains on dummy data.)
 
 * Note: Disable the extension after testing. ;) Cause it may make your text area elements go crazy on other websites.
+
+## Demo:
+
+<figure>
+    <img src='./art/image1.png' alt='An image demonstrating basic function of cryptly.'/>
+    <figcaption>
+    Type in the TextArea and Cryptly will display an emoji depicting the sentiment of your input text. You can enable/disale Cryptly on a website using the extension popup.
+    </figcaption>
+</figure>
+
+<figure>
+    <img src='art/image2.png' alt='An image demonstrating how to correct Cryptly predictions.'/>
+    <figcaption>
+    You can correct Cryptly's predictions. The corrections are stored locally and serve as training data for Cryptly models.
+    </figcaption>
+</figure>
+
+
+<figure>
+    <img src='./art/image3.png' alt='An image demonstrating how to pull a model.'/>
+    <figcaption>
+    You can pull the updated model from grid using the extension popup. This updated model has been trained on the corrections provided by multiple users of Cryptly. The pulled model replaces your local model and provides better predictions.
+    </figcaption>
+</figure>
+
+
 ## Resources:
 - Awesome explanation of [Federated Learning by Web & Mobile team @OpenMined](https://github.com/OpenMined/Roadmap/blob/master/web_and_mobile_team/projects/federated_learning.md).
 
